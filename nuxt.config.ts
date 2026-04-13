@@ -7,9 +7,17 @@ export default defineNuxtConfig({
     "@nuxtjs/i18n",
     "@pinia/nuxt",
     "shadcn-nuxt",
+    "@nuxtjs/color-mode",
   ],
   devtools: { enabled: true },
   css: ["./tailwind.css"],
+  colorMode: {
+    classPrefix: "",
+    classSuffix: "",
+    preference: "system",
+    fallback: "dark",
+    storageKey: "aurora-lens-scheme",
+  },
   compatibilityDate: "2025-07-15",
   postcss: {
     plugins: {
