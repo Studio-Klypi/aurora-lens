@@ -1,0 +1,443 @@
+// =============================================
+// Aurora Lens — Database Schema (DBML)
+// SaaS bento-style profile / link-in-bio builder
+// PostgreSQL-compatible, UUIDs, Prisma ORM
+// =============================================
+
+// ----- ENUMS -----
+
+Enum oauth_provider {
+  google
+  apple
+}
+
+Enum block_type {
+  profile
+  bio
+  link
+  photo
+  contact
+  testimonials
+}
+
+Enum subscription_status {
+  active
+  past_due
+  canceled
+  incomplete
+  incomplete_expired
+  trialing
+  unpaid
+  paused
+}
+
+Enum billing_interval {
+  month
+  year
+}
+
+Enum testimonial_status {
+  pending
+  approved
+  rejected
+}
+
+Enum analytics_event_type {
+  page_view
+  block_click
+  link_click
+}
+
+Enum device_type {
+  desktop
+  mobile
+  tablet
+  unknown
+}
+
+// ----- AUTHENTICATION -----
+
+Table users {
+  id uuid [pk, default: `gen_random_uuid()`]
+  email varchar(255) [unique, not null]
+  password_hash varchar(255) [note: 'Nullable — null when user signed up via OAuth only']
+  username varchar(64) [unique, not null, note: 'Public handle, used in profile URL']
+  display_name varchar(128)
+  avatar_url text
+  email_verified_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    email [unique]
+    username [unique]
+  }
+}
+
+Table email_verification_tokens {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+  token varchar(255) [unique, not null]
+  expires_at timestamptz [not null]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    token [unique]
+    user_id
+  }
+}
+
+Table password_reset_tokens {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+  token varchar(255) [unique, not null]
+  expires_at timestamptz [not null]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    token [unique]
+    user_id
+  }
+}
+
+// ----- OAUTH -----
+
+Table oauth_accounts {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+  provider oauth_provider [not null]
+  provider_account_id varchar(255) [not null, note: 'ID from the OAuth provider']
+  access_token text
+  refresh_token text
+  token_expires_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (provider, provider_account_id) [unique, name: 'uq_oauth_provider_account']
+    user_id
+  }
+}
+
+// ----- PAGES -----
+
+Table pages {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+  slug varchar(128) [unique, not null, note: 'URL path segment for this page']
+  title varchar(255)
+  is_published boolean [not null, default: false]
+  seo_title varchar(255)
+  seo_description text
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    slug [unique]
+    user_id
+  }
+}
+
+// ----- BENTO BLOCKS -----
+//
+// Polymorphic block system: single table with type discriminator + JSONB settings.
+//
+// settings JSONB shape per block_type:
+//
+//   profile:       { name, avatar_url, show_verified_badge }
+//   bio:           { content, text_align }
+//   link:          { url, label, icon, thumbnail_url }
+//   photo:         { image_url, alt_text, object_fit }
+//   contact:       { mode: "mailto" | "form", email, subject, fields }
+//   testimonials:  { layout, max_visible }  — testimonials linked via block_testimonials
+//
+// Block limits per plan:
+//   profile:       1 (all plans)
+//   bio:           1 (all plans)
+//   contact:       1 (all plans) — mailto on free, form on pro
+//   testimonials:  1 (pro only)
+//   link:          2 (free), 5 (pro)
+//   photo:         10 (free), unlimited (pro)
+
+Table blocks {
+  id uuid [pk, default: `gen_random_uuid()`]
+  page_id uuid [not null, ref: > pages.id]
+  type block_type [not null]
+  position_row int [not null, default: 0]
+  position_col int [not null, default: 0]
+  width int [not null, default: 1, note: 'Columns spanned in the bento grid']
+  height int [not null, default: 1, note: 'Rows spanned in the bento grid']
+  sort_order int [not null, default: 0, note: 'Ordering within same grid position / mobile fallback']
+  is_visible boolean [not null, default: true]
+  settings jsonb [not null, default: `'{}'::jsonb`, note: 'Type-specific configuration — shape depends on block type']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    page_id
+    (page_id, sort_order)
+    type
+  }
+}
+
+// ----- TESTIMONIALS -----
+
+Table testimonials {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id, note: 'The user who receives/owns this testimonial']
+  author_name varchar(128) [not null]
+  author_email varchar(255)
+  author_avatar_url text
+  author_title varchar(255) [note: 'e.g. "CEO at Acme"']
+  content text [not null]
+  rating smallint [note: '1-5 star rating, nullable if not rated']
+  status testimonial_status [not null, default: 'pending']
+  submitted_at timestamptz [not null, default: `now()`]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    user_id
+    (user_id, status)
+  }
+}
+
+// ----- STRIPE / SUBSCRIPTIONS -----
+
+// Plans:
+//   free: 0€, links=2, photos=10, contact=mailto, testimonials=false, stats=false, customization=false
+//   pro:  10€/month or 96€/year (8€/month), links=5, photos=-1 (unlimited), contact=form, testimonials=true, stats=true, customization=true
+
+Table plans {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name varchar(128) [not null]
+  slug varchar(64) [unique, not null]
+  stripe_product_id varchar(255) [unique]
+  stripe_price_id_monthly varchar(255) [unique]
+  stripe_price_id_yearly varchar(255) [unique]
+  price_monthly int [not null, note: 'Price in cents — 0 for free plan']
+  price_yearly int [not null, note: 'Price in cents — 0 for free plan']
+  max_links int [not null, default: 2, note: '-1 = unlimited']
+  max_photos int [not null, default: 10, note: '-1 = unlimited']
+  has_testimonials boolean [not null, default: false]
+  has_stats boolean [not null, default: false]
+  has_customization boolean [not null, default: false]
+  has_contact_form boolean [not null, default: false, note: 'false = mailto only']
+  is_active boolean [not null, default: true]
+  sort_order int [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    slug [unique]
+    is_active
+  }
+}
+
+Table stripe_customers {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [unique, not null, ref: - users.id]
+  stripe_customer_id varchar(255) [unique, not null]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    user_id [unique]
+    stripe_customer_id [unique]
+  }
+}
+
+Table subscriptions {
+  id uuid [pk, default: `gen_random_uuid()`]
+  stripe_customer_id uuid [not null, ref: > stripe_customers.id]
+  plan_id uuid [not null, ref: > plans.id]
+  stripe_subscription_id varchar(255) [unique, not null]
+  status subscription_status [not null, default: 'incomplete']
+  billing_interval billing_interval [not null, default: 'month']
+  current_period_start timestamptz [not null]
+  current_period_end timestamptz [not null]
+  cancel_at_period_end boolean [not null, default: false]
+  canceled_at timestamptz
+  ended_at timestamptz
+  trial_start timestamptz
+  trial_end timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    stripe_subscription_id [unique]
+    stripe_customer_id
+    status
+    (stripe_customer_id, status)
+  }
+}
+
+Table payment_history {
+  id uuid [pk, default: `gen_random_uuid()`]
+  stripe_customer_id uuid [not null, ref: > stripe_customers.id]
+  subscription_id uuid [ref: > subscriptions.id, note: 'Nullable for one-time charges']
+  stripe_invoice_id varchar(255) [unique]
+  stripe_charge_id varchar(255) [unique]
+  amount int [not null, note: 'Amount in cents']
+  currency varchar(3) [not null, default: 'eur']
+  status varchar(32) [not null, note: 'paid, failed, refunded, etc.']
+  description text
+  invoice_url text
+  paid_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    stripe_customer_id
+    stripe_invoice_id [unique]
+    (stripe_customer_id, created_at)
+  }
+}
+
+// ----- ANALYTICS -----
+//
+// Two-tier approach:
+// 1. analytics_events — raw append-only event log for detailed drill-downs
+// 2. analytics_daily_* — pre-aggregated daily rollups for fast dashboard queries
+
+Table analytics_events {
+  id uuid [pk, default: `gen_random_uuid()`]
+  page_id uuid [not null, ref: > pages.id]
+  block_id uuid [ref: > blocks.id, note: 'Null for page_view events']
+  event_type analytics_event_type [not null]
+  referrer varchar(2048)
+  referrer_domain varchar(255) [note: 'Extracted domain for grouping']
+  country_code varchar(2) [note: 'ISO 3166-1 alpha-2']
+  city varchar(128)
+  device_type device_type [not null, default: 'unknown']
+  browser varchar(64)
+  os varchar(64)
+  user_agent text
+  ip_hash varchar(64) [note: 'Hashed IP for uniqueness without storing PII']
+  session_id varchar(64) [note: 'Anonymous session identifier']
+  destination_url text [note: 'Clicked URL for link_click events']
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    page_id
+    (page_id, event_type, created_at)
+    (page_id, created_at)
+    created_at
+    referrer_domain
+    country_code
+  }
+
+  Note: 'Consider partitioning by created_at (monthly range partitions) for large-scale deployments.'
+}
+
+Table analytics_daily {
+  id uuid [pk, default: `gen_random_uuid()`]
+  page_id uuid [not null, ref: > pages.id]
+  date date [not null, note: 'The calendar day (UTC) this row covers']
+  page_views int [not null, default: 0]
+  unique_visitors int [not null, default: 0, note: 'Distinct ip_hash or session_id count']
+  link_clicks int [not null, default: 0]
+  block_clicks int [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (page_id, date) [unique, name: 'uq_analytics_daily_page_date']
+    date
+    page_id
+  }
+}
+
+Table analytics_daily_referrers {
+  id uuid [pk, default: `gen_random_uuid()`]
+  page_id uuid [not null, ref: > pages.id]
+  date date [not null]
+  referrer_domain varchar(255) [not null]
+  visit_count int [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (page_id, date, referrer_domain) [unique, name: 'uq_daily_referrer']
+    (page_id, date)
+  }
+}
+
+Table analytics_daily_countries {
+  id uuid [pk, default: `gen_random_uuid()`]
+  page_id uuid [not null, ref: > pages.id]
+  date date [not null]
+  country_code varchar(2) [not null]
+  visit_count int [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (page_id, date, country_code) [unique, name: 'uq_daily_country']
+    (page_id, date)
+  }
+}
+
+Table analytics_daily_devices {
+  id uuid [pk, default: `gen_random_uuid()`]
+  page_id uuid [not null, ref: > pages.id]
+  date date [not null]
+  device_type device_type [not null]
+  visit_count int [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (page_id, date, device_type) [unique, name: 'uq_daily_device']
+    (page_id, date)
+  }
+}
+
+Table analytics_daily_blocks {
+  id uuid [pk, default: `gen_random_uuid()`]
+  page_id uuid [not null, ref: > pages.id]
+  block_id uuid [not null, ref: > blocks.id]
+  date date [not null]
+  click_count int [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (page_id, block_id, date) [unique, name: 'uq_daily_block']
+    (page_id, date)
+    block_id
+  }
+}
+
+// ----- TABLE GROUPS -----
+
+TableGroup authentication [color: #4F46E5] {
+  users
+  email_verification_tokens
+  password_reset_tokens
+  oauth_accounts
+}
+
+TableGroup content [color: #0EA5E9] {
+  pages
+  blocks
+}
+
+TableGroup testimonials_group [color: #F59E0B] {
+  testimonials
+}
+
+TableGroup billing [color: #10B981] {
+  plans
+  stripe_customers
+  subscriptions
+  payment_history
+}
+
+TableGroup analytics [color: #EF4444] {
+  analytics_events
+  analytics_daily
+  analytics_daily_referrers
+  analytics_daily_countries
+  analytics_daily_devices
+  analytics_daily_blocks
+}
