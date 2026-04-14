@@ -1,0 +1,55 @@
+{
+  "btn": {
+  },
+  "navigation": {
+    "login": "Connexion",
+    "register": "Inscription"
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "fields": {
+        "email": {
+          "label": "Adresse email",
+          "placeholder": "john.doe{'@'}example.xyz"
+        },
+        "password": {
+          "label": "Mot de passe",
+          "placeholder": "Entrez un mot de passe fort"
+        }
+      },
+      "action": "Me connecter",
+      "not-registered": "Je n'ai pas de compte"
+    },
+    "register": {
+      "title": "Inscription",
+      "fields": {
+        "username": {
+          "tooltip": "Seulement a-z, -, . et 0-9",
+          "label": "Nom d'utilisateur",
+          "placeholder": "john.doe"
+        },
+        "email": {
+          "label": "Adresse email",
+          "placeholder": "john.doe{'@'}example.xyz"
+        },
+        "password": {
+          "tooltip": [
+            "au moins 1 minuscule",
+            "au moins 1 majuscule",
+            "au moins 1 chiffre",
+            "au moins 1 caractère spécial"
+          ],
+          "label": "Mot de passe",
+          "placeholder": "Entrez un mot de passe fort"
+        }
+      },
+      "warning": "En cliquant sur \"Créer mon compte\", vous acceptez les {link}.",
+      "terms-of-use": "conditions d'utilisations",
+      "action": "Créer mon compte",
+      "already-registered": "J'ai déjà un compte"
+    },
+    "forgot-password": {},
+    "reset-password": {}
+  }
+}
