@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight, Eye, EyeOff, Info } from "@lucide/vue";
+import { ArrowRight, Eye, EyeOff } from "@lucide/vue";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
