@@ -42,7 +42,18 @@ export default defineNuxtConfig({
   },
   i18n: {
     defaultLocale: "fr",
-    locales: [],
+    locales: [
+      {
+        name: "Français",
+        code: "fr",
+        iso: "fr-FR",
+        file: "fr.json",
+      },
+    ],
     strategy: "no_prefix",
+  },
+  shadcn: {
+    prefix: "ui",
+    componentDir: "./app/components/ui",
   },
 });
