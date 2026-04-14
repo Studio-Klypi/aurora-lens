@@ -2,7 +2,9 @@ import { type AuthenticationState, defaults } from "~/types/states/authenticatio
 
 export const useAuthStore = defineStore("auth", {
   state: (): AuthenticationState => ({ ...defaults }),
-  getters: {},
+  getters: {
+    translate: () => useNuxtApp().$i18n.t,
+  },
   actions: {
     async recoverUser() {},
 
