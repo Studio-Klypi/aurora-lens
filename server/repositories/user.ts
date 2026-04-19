@@ -52,12 +52,18 @@ class UserRepository {
   }
 
   async update(id: number, payload: Partial<UpdateUser>, admin: boolean = false) {
+    const passwordHash = payload.password && (await hash(payload.password));
+    delete payload.password;
+
     return prisma.user.update({
       where: {
         id,
         ...(admin ? {} : { deletedAt: null }),
       },
-      data: payload,
+      data: {
+        ...payload,
+        ...(passwordHash ? { passwordHash } : {}),
+      },
       omit: admin
         ? {}
         : {
