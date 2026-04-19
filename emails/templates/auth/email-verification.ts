@@ -1,5 +1,5 @@
 import mjml2html from "mjml";
-import type { EmailTemplate } from "./types";
+import type { EmailTemplate } from "../types";
 
 interface EmailVerificationProps {
   displayName: string;
@@ -19,19 +19,19 @@ export function emailVerificationTemplate(props: EmailVerificationProps): EmailT
         <mj-section padding="40px 0">
           <mj-column background-color="#ffffff" border-radius="8px" padding="40px">
             <mj-text font-size="24px" font-weight="600" color="#1a1a1a" padding-bottom="24px">
-              Bienvenue sur Aurora Lens
+              Welcome to Aurora Lens
             </mj-text>
             <mj-text>
-              Bonjour ${props.displayName},
+              Hi ${props.displayName},
             </mj-text>
             <mj-text>
-              Merci de vous être inscrit. Veuillez cliquer sur le bouton ci-dessous pour vérifier votre adresse email.
+              Thank you for signing up. Please click the button below to verify your email address.
             </mj-text>
             <mj-button background-color="#0f172a" border-radius="6px" font-size="16px" font-weight="600" href="${props.verificationUrl}" padding="32px 0">
-              Vérifier mon email
+              Verify my email
             </mj-button>
             <mj-text font-size="14px" color="#8c8c8c" line-height="20px">
-              Ce lien expire dans 15 minutes. Si vous n'avez pas créé de compte, vous pouvez ignorer cet email.
+              Please open this link in the same browser you used to sign up, so your session remains active. This link expires in 15 minutes. If you didn't create an account, you can safely ignore this email.
             </mj-text>
             <mj-divider border-color="#e6e6e6" padding="24px 0" />
             <mj-text font-size="12px" color="#b4b4b4" line-height="16px">
@@ -43,15 +43,15 @@ export function emailVerificationTemplate(props: EmailVerificationProps): EmailT
     </mjml>
   `);
 
-  const text = `Bienvenue sur Aurora Lens
+  const text = `Welcome to Aurora Lens
 
-Bonjour ${props.displayName},
+Hi ${props.displayName},
 
-Merci de vous être inscrit. Veuillez cliquer sur le lien ci-dessous pour vérifier votre adresse email :
+Thank you for signing up. Please click the link below to verify your email address:
 
 ${props.verificationUrl}
 
-Ce lien expire dans 15 minutes. Si vous n'avez pas créé de compte, vous pouvez ignorer cet email.
+Please open this link in the same browser you used to sign up, so your session remains active. This link expires in 15 minutes. If you didn't create an account, you can safely ignore this email.
 
 Aurora Lens — Studio Klypi`;
 

@@ -57,6 +57,7 @@
   },
   "devDependencies": {
     "@prisma/client": "^7.7.0",
+    "@types/mjml": "^4.7.4",
     "@types/node": "^25.6.0",
     "@types/nodemailer": "^8.0.0",
     "eslint": "^9.39.4",

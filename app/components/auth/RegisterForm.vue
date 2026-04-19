@@ -7,6 +7,7 @@ import { UsernameValidator } from "#shared/validators/username.validator";
 import { PasswordValidator } from "#shared/validators/password.validator";
 
 const store = useAuthStore();
+const { loading } = storeToRefs(store);
 
 const showPassword = ref<boolean>(false);
 
@@ -55,6 +56,7 @@ const submit = form.handleSubmit(async (values) => {
           <UiFormControl>
             <UiInput
               v-bind="componentField"
+              :disabled="loading.register"
               :placeholder="$t('auth.register.fields.username.placeholder')"
             />
           </UiFormControl>
@@ -71,6 +73,7 @@ const submit = form.handleSubmit(async (values) => {
             <UiInput
               v-bind="componentField"
               type="email"
+              :disabled="loading.register"
               :placeholder="$t('auth.register.fields.email.placeholder')"
             />
           </UiFormControl>
@@ -107,6 +110,7 @@ const submit = form.handleSubmit(async (values) => {
                 v-bind="componentField"
                 :type="showPassword ? 'text' : 'password'"
                 :placeholder="$t('auth.register.fields.password.placeholder')"
+                :disabled="loading.register"
                 class="pr-10"
               />
             </UiFormControl>
@@ -139,9 +143,10 @@ const submit = form.handleSubmit(async (values) => {
         </i18n-t>
       </p>
 
-      <UiButton>
+      <UiButton :disabled="loading.register">
         {{ $t("auth.register.action") }}
-        <ArrowRight />
+        <UiSpinner v-if="loading.register" />
+        <ArrowRight v-else />
       </UiButton>
       <UiButton
         type="button"

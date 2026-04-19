@@ -1,8 +1,11 @@
+import type { UserEntity } from "#shared/types/entities/user";
+
 export interface AuthenticationState {
-  user: unknown | null;
+  user: UserEntity | null;
   loading: {
     login: boolean;
     register: boolean;
+    verify: boolean;
   };
 }
 
@@ -11,5 +14,6 @@ export const defaults: AuthenticationState = {
   loading: {
     login: false,
     register: false,
+    verify: false,
   },
 };

@@ -4,7 +4,10 @@ import { ArrowLeft } from "@lucide/vue";
 </script>
 
 <template>
-  <Layout name="authentication">
+  <Layout
+    name="authentication"
+    class="flex flex-col min-h-dvh px-6"
+  >
     <header class="fixed top-0 inset-x-0 h-16 flex items-center gap-2 px-6">
       <UiButton
         size="icon-sm"
@@ -20,7 +23,7 @@ import { ArrowLeft } from "@lucide/vue";
       </p>
     </header>
 
-    <main>
+    <main class="flex-1 flex flex-col">
       <NuxtPage />
     </main>
   </Layout>

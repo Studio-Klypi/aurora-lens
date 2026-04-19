@@ -1,5 +1,5 @@
 import mjml2html from "mjml";
-import type { EmailTemplate } from "./types";
+import type { EmailTemplate } from "../types";
 
 interface PasswordResetProps {
   displayName: string;
@@ -19,19 +19,19 @@ export function passwordResetTemplate(props: PasswordResetProps): EmailTemplate 
         <mj-section padding="40px 0">
           <mj-column background-color="#ffffff" border-radius="8px" padding="40px">
             <mj-text font-size="24px" font-weight="600" color="#1a1a1a" padding-bottom="24px">
-              Réinitialisation du mot de passe
+              Password reset
             </mj-text>
             <mj-text>
-              Bonjour ${props.displayName},
+              Hi ${props.displayName},
             </mj-text>
             <mj-text>
-              Nous avons reçu une demande de réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour en choisir un nouveau.
+              We received a request to reset your password. Click the button below to choose a new one.
             </mj-text>
             <mj-button background-color="#0f172a" border-radius="6px" font-size="16px" font-weight="600" href="${props.resetUrl}" padding="32px 0">
-              Réinitialiser mon mot de passe
+              Reset my password
             </mj-button>
             <mj-text font-size="14px" color="#8c8c8c" line-height="20px">
-              Ce lien expire dans 15 minutes. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.
+              This link expires in 15 minutes. If you didn't request this, you can safely ignore this email.
             </mj-text>
             <mj-divider border-color="#e6e6e6" padding="24px 0" />
             <mj-text font-size="12px" color="#b4b4b4" line-height="16px">
@@ -43,15 +43,15 @@ export function passwordResetTemplate(props: PasswordResetProps): EmailTemplate 
     </mjml>
   `);
 
-  const text = `Réinitialisation du mot de passe
+  const text = `Password reset
 
-Bonjour ${props.displayName},
+Hi ${props.displayName},
 
-Nous avons reçu une demande de réinitialisation de votre mot de passe. Cliquez sur le lien ci-dessous pour en choisir un nouveau :
+We received a request to reset your password. Click the link below to choose a new one:
 
 ${props.resetUrl}
 
-Ce lien expire dans 15 minutes. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.
+This link expires in 15 minutes. If you didn't request this, you can safely ignore this email.
 
 Aurora Lens — Studio Klypi`;
 

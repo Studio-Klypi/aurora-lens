@@ -1,3 +1,4 @@
 export type { EmailTemplate } from "./types";
-export { emailVerificationTemplate } from "./email-verification";
-export { passwordResetTemplate } from "./password-reset";
+export { emailVerificationTemplate } from "./auth/email-verification";
+export { emailVerifiedTemplate } from "./auth/email-verified";
+export { passwordResetTemplate } from "./auth/password-reset";
