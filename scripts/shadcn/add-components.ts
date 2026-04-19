@@ -17,7 +17,7 @@ console.log();
 
 // Step 1: Add components
 console.log(`\x1b[33m⏳ Adding ${components.length} component(s)...\x1b[0m`);
-const cmd = `npx shadcn-vue@latest add ${components.join(" ")} --no`;
+const cmd = `npx shadcn-vue@latest add ${components.join(" ")}`;
 console.log(`\x1b[90m   $ ${cmd}\x1b[0m`);
 execSync(cmd, { cwd: ROOT, stdio: "inherit" });
 console.log("\x1b[32m✔ Components added.\x1b[0m");

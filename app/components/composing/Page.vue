@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<ComposingProps>(), {
 <template>
   <main
     :data-page-name="name"
-    :class="cn('', props.class)"
+    :class="cn('@container/page', props.class)"
   >
     <slot />
   </main>

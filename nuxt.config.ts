@@ -7,9 +7,32 @@ export default defineNuxtConfig({
     "@nuxtjs/i18n",
     "@pinia/nuxt",
     "shadcn-nuxt",
+    "@nuxtjs/color-mode",
   ],
   devtools: { enabled: true },
   css: ["./tailwind.css"],
+  colorMode: {
+    classPrefix: "",
+    classSuffix: "",
+    preference: "system",
+    fallback: "dark",
+    storageKey: "aurora-lens-scheme",
+  },
+  runtimeConfig: {
+    app: {
+      env: "",
+    },
+    smtp: {
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 587,
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+      from: process.env.SMTP_FROM,
+    },
+    session: {
+      cookie: "",
+    },
+  },
   compatibilityDate: "2025-07-15",
   postcss: {
     plugins: {
@@ -34,7 +57,18 @@ export default defineNuxtConfig({
   },
   i18n: {
     defaultLocale: "fr",
-    locales: [],
+    locales: [
+      {
+        name: "Français",
+        code: "fr",
+        iso: "fr-FR",
+        file: "fr.json",
+      },
+    ],
     strategy: "no_prefix",
+  },
+  shadcn: {
+    prefix: "ui",
+    componentDir: "./app/components/ui",
   },
 });
