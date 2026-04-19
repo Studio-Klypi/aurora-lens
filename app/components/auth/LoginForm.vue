@@ -53,7 +53,7 @@ const submit = form.handleSubmit(async (values) => {
         v-slot="{ componentField }"
         name="password"
       >
-        <UiFormItem>
+        <UiFormItem class="flex flex-col gap-2 space-y-0">
           <UiFormLabel>{{ $t("auth.login.fields.password.label") }}</UiFormLabel>
           <div class="relative">
             <UiFormControl>
@@ -75,6 +75,18 @@ const submit = form.handleSubmit(async (values) => {
               <Eye v-else />
             </UiButton>
           </div>
+          <UiFormDescription class="self-end">
+            <UiButton
+              type="button"
+              variant="link"
+              class="p-0 h-auto text-muted-foreground"
+              as-child
+            >
+              <NuxtLinkLocale to="/auth/forgot-password">
+                Mot de passe oublié ?
+              </NuxtLinkLocale>
+            </UiButton>
+          </UiFormDescription>
         </UiFormItem>
       </UiFormField>
     </main>

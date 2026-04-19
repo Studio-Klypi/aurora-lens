@@ -6,6 +6,8 @@ export interface AuthenticationState {
     login: boolean;
     register: boolean;
     verify: boolean;
+    forgot: boolean;
+    reset: boolean;
   };
 }
 
@@ -15,5 +17,7 @@ export const defaults: AuthenticationState = {
     login: false,
     register: false,
     verify: false,
+    forgot: false,
+    reset: false,
   },
 };

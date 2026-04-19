@@ -20,7 +20,12 @@ class ResetPassword {
     }));
 
     try {
-      const user = await UserModel.getByEmail(email);
+      const user = await UserModel.getByEmail(email).catch(() => {});
+      if (!user) {
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 750));
+        return;
+      }
+
       const prToken = await PasswordResetModel.create(user.id);
 
       const template = passwordResetTemplate({
@@ -37,13 +42,6 @@ class ResetPassword {
     catch (e) {
       const error = e as Prisma.PrismaClientKnownRequestError;
       switch (error.code) {
-        case "P2025": return sendError(event, createError({
-          statusCode: HttpCode.NOT_FOUND,
-          statusMessage: "User not found.",
-          data: {
-            errorCode: ErrorCode.USER_NOT_FOUND,
-          },
-        }));
         default: return sendError(event, createError({
           statusCode: HttpCode.INTERNAL_SERVER_ERROR,
         }));

@@ -4,6 +4,7 @@ import LoginForm from "~/components/auth/LoginForm.vue";
 
 definePageMeta({
   layout: "authentication",
+  middleware: ["strict-public"],
 });
 </script>
 

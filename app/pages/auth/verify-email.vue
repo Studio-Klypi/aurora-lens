@@ -3,6 +3,7 @@ import Page from "~/components/composing/Page.vue";
 
 definePageMeta({
   layout: "authentication",
+  middleware: ["strict-private"],
 });
 
 const { query } = useRoute();

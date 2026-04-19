@@ -119,6 +119,50 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
+    async forgotPassword(email: string) {
+      this.loading.forgot = true;
+      let state = true;
+
+      try {
+        await $fetch("/api/auth/password/forgot", {
+          method: "POST",
+          body: {
+            email,
+          },
+        });
+      }
+      catch {
+        state = false;
+      }
+      finally {
+        this.loading.forgot = false;
+      }
+
+      return state;
+    },
+    async resetPassword(token: string, password: string) {
+      this.loading.reset = true;
+      let state = true;
+
+      try {
+        await $fetch("/api/auth/password/reset", {
+          method: "POST",
+          body: {
+            token,
+            password,
+          },
+        });
+      }
+      catch {
+        state = false;
+      }
+      finally {
+        this.loading.reset = false;
+      }
+
+      return state;
+    },
+
     async logout() {
       if (!this.user) return;
 
